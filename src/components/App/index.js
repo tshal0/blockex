@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 import Block from './../Block';
 import Home from './../Home';
+import Ethemy from './../Ethemy';
 
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
 
@@ -21,7 +22,9 @@ class App extends Component {
                         <div>
                             <Link to="/">Home</Link>
                             <Link to="/block">Block</Link>
+                            <Link to="/contract">Ethemy</Link>
                             <Route exact path="/" component={Home}/>
+                            <Route exact path="/contract" component={Ethemy}/>
                             <Route exact path="/block" render={() => (
                                 <h3>Please select a block Hash:</h3>
                             )}/>
