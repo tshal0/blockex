@@ -7,7 +7,7 @@ import { Icon, Label, Menu, Table, Button, Input, Dropdown } from 'semantic-ui-r
 import './Ethemy.css';
 
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
-var address = "0x0f740f18d49240564995d6325b20f3d65177b136";
+var address = "0x1b5ae8f48bdc13bf7ed78b062fd86626d56282d3";
 var devAbi = [
     {
       "inputs": [
@@ -20,7 +20,68 @@ var devAbi = [
       "stateMutability": "nonpayable",
       "type": "function",
       "constant": false,
+      "name": "dispense",
+      "outputs": []
+    },
+    {
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function",
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_addr",
+          "type": "address"
+        }
+      ],
       "name": "addAddress",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address[]"
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function",
+      "constant": false,
+      "name": "withdraw",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function",
+      "inputs": [
+        {
+          "name": "_addr",
+          "type": "address"
+        }
+      ],
+      "constant": false,
+      "name": "kill",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function",
+      "inputs": [],
+      "constant": false,
+      "name": "withdrawAll",
       "outputs": []
     },
     {
@@ -38,48 +99,77 @@ var devAbi = [
       ]
     },
     {
-      "inputs": [],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function",
       "constant": true,
+      "inputs": [],
       "name": "getLength",
       "outputs": [
         {
           "name": "",
           "type": "uint256"
         }
-      ]
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
     },
     {
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function",
+      "constant": false,
       "inputs": [
         {
           "name": "_addr",
           "type": "address"
         }
       ],
-      "constant": false,
       "name": "getShares",
       "outputs": [
         {
           "name": "",
           "type": "uint256"
         }
-      ]
-    },
-    {
+      ],
       "payable": false,
       "stateMutability": "nonpayable",
-      "type": "constructor",
-      "inputs": []
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
     },
     {
       "payable": true,
       "stateMutability": "payable",
       "type": "fallback"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "FailedSend",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "FailedAddShareholder",
+      "type": "event"
     }
   ];
 
@@ -101,12 +191,16 @@ class Ethemy extends Component {
         var shareholders = Contract.getAddresses.call();
         
         var shareholderBalances = [];
-
+        var accountBalances = [];
+        
         for (var i = 0; i < shareholders.length; i++) {
             var tBal = Contract.getShares.call(shareholders[i]);
+            var tempBal = web3.eth.getBalance(shareholders[i]);
             console.log(web3.fromWei(tBal.toNumber()), "ether");
             shareholderBalances.push(tBal.toNumber());
+            accountBalances.push(tempBal.toNumber());
         } 
+        
 
         var accounts = web3.eth.accounts;
         var options = [];
@@ -129,6 +223,7 @@ class Ethemy extends Component {
             length: 0,
             shareholders: shareholders,
             shareholderBalances: shareholderBalances,
+            accountBalances: accountBalances,
             accounts: accounts,
             selectedAccount: "",
             options: options
@@ -156,11 +251,14 @@ class Ethemy extends Component {
         var shareholders = Contract.getAddresses.call();
         
         var shareholderBalances = [];
+        var accountBalances = [];
 
         for (var i = 0; i < shareholders.length; i++) {
             var tBal = Contract.getShares.call(shareholders[i]);
+            var tempBal = web3.eth.getBalance(shareholders[i]);
             console.log(web3.fromWei(tBal.toNumber()), "ether");
             shareholderBalances.push(tBal.toNumber());
+            accountBalances.push(tempBal.toNumber());
         } 
 
         console.log(shareholders);
@@ -169,6 +267,7 @@ class Ethemy extends Component {
         this.setState({
             shareholders: shareholders,
             shareholderBalances: shareholderBalances,
+            accountBalances: accountBalances,
             contract: Contract,
             balance: balance.toNumber()
         })
@@ -264,6 +363,7 @@ class Ethemy extends Component {
                     <Table.Row>
                         <Table.HeaderCell collapsing>Address</Table.HeaderCell>
                         <Table.HeaderCell >Shares</Table.HeaderCell>
+                        <Table.HeaderCell >Balance</Table.HeaderCell>
                     </Table.Row>
                     </Table.Header>
 
@@ -273,6 +373,7 @@ class Ethemy extends Component {
                             <Table.Row>
                                 <Table.Cell collapsing>{row}</Table.Cell>
                                 <Table.Cell >{this.state.web3.fromWei(this.state.shareholderBalances[i], "ether")}</Table.Cell>
+                                <Table.Cell>{this.state.web3.fromWei(this.state.accountBalances[i], "ether")}</Table.Cell>
                             </Table.Row>
                         )}
 
@@ -285,6 +386,12 @@ class Ethemy extends Component {
                     </Table.Body>
                 </Table>
                 <Table>
+                    <Table.Header>
+                        <Table.Row>
+                            <Table.HeaderCell>Select Account</Table.HeaderCell>
+                            <Table.HeaderCell>Actions</Table.HeaderCell>
+                        </Table.Row>
+                    </Table.Header>
                     <Table.Body>
                         <Table.Row>
                             <Table.Cell>
