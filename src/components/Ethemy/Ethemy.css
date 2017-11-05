@@ -1,14 +1,19 @@
-table {
-    width: 80%;
+.ui.table {
+    width: 50% !important;
+    margin:auto !important;
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+
+}
+
+div {
+    
 }
 
 table tbody tr td {
     width: auto;
 }
 
-    
-
-
-input {
+.ui .input {
     width: 100%;
 }

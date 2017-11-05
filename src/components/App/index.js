@@ -6,7 +6,11 @@ import Ethemy from './../Ethemy';
 
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
 
+import { Icon, Label, Menu, Table, Button } from 'semantic-ui-react'
+
 import logo from './logo.svg';
+import 'semantic-ui-css/semantic.min.css';
+
 import './App.css';
 
 class App extends Component {
