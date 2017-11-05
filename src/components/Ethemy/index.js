@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import Web3 from 'web3';
 
-import { Icon, Label, Menu, Table, Button, Input } from 'semantic-ui-react'
+import { Icon, Label, Menu, Table, Button, Input, Dropdown } from 'semantic-ui-react'
 // import _ from 'lodash';
 //import {Link} from 'react-router-dom';
 import './Ethemy.css';
@@ -91,7 +91,7 @@ class Ethemy extends Component {
     constructor(props) {
         // Just for initializing state and binding methods. 
         // web3.eth.defaultAccount = web3.eth.accounts[0]
-        var Contract = web3.eth.contract(devAbi, address, {from:web3.eth.coinbase}).at(address);;
+        var Contract = web3.eth.contract(devAbi, address, {from:web3.eth.coinbase}).at(address);
         
         // console.log(Contract.at(address))
         // console.log(Contract.at(address).addShareholder(web3.eth.coinbase, 10));
@@ -107,9 +107,19 @@ class Ethemy extends Component {
             console.log(web3.fromWei(tBal.toNumber()), "ether");
             shareholderBalances.push(tBal.toNumber());
         } 
+
+        var accounts = web3.eth.accounts;
+        var options = [];
+        for (var i = 0; i < accounts.length; i++) {
+            var tBal = web3.eth.getBalance(accounts[i]).toNumber();
+            options.push({key:accounts[i], text:accounts[i], balance:web3.fromWei(tBal, "ether"), value:i});
+            console.log(options[i]);
+        }
         
         super(props);
         this.handleChange = this.handleChange.bind(this);
+        this.handleSelection = this.handleSelection.bind(this);
+        this.addShareholder = this.addShareholder.bind(this);
         this.state = {
             web3: web3,
             address: address,
@@ -118,7 +128,10 @@ class Ethemy extends Component {
             balance: balance,
             length: 0,
             shareholders: shareholders,
-            shareholderBalances: shareholderBalances
+            shareholderBalances: shareholderBalances,
+            accounts: accounts,
+            selectedAccount: "",
+            options: options
         }
     }
 
@@ -162,11 +175,38 @@ class Ethemy extends Component {
 
     }
     handleChange(event) {
-        console.log(event.target.name);
+        console.log(event.target);
         var key = event.target.name;
         var obj = {};
         obj[key] = event.target.value;
         this.setState(obj);
+    }
+    handleSelection(e, props) {
+        var obj = {selectedAccount: props.value};
+        console.log(props.value);
+        this.setState(obj);
+    }
+
+    addRow(event){
+        var nextShareholders = this.state.shareholders;
+        var nextShareholdersBal = this.state.Contract.getShares.call(event.target.value);
+        var nextShareholdersBals = this.state.shareholderBalances;
+        nextShareholders.push(event.target.value);
+        nextShareholdersBals.push(nextShareholdersBal);
+
+        this.setState({
+            shareholders: nextShareholders,
+            shareholderBalances: nextShareholdersBals
+        })
+    }
+
+    addShareholder(event) {
+        console.log(this.state.contract);
+        console.log(this.state.accounts[6]);
+        this.state.web3.eth.defaultAccount = this.state.web3.eth.coinbase;
+        this.state.contract.addAddress(this.state.accounts[6]);
+        this.getContract();
+        
     }
 
     render() {
@@ -241,9 +281,24 @@ class Ethemy extends Component {
                         </Table.Cell>
                         <Table.Cell collapsing>Initial commit</Table.Cell>
                         <Table.Cell collapsing textAlign='right'>10 hours ago</Table.Cell> */}
-
+                        
                     </Table.Body>
                 </Table>
+                <Table>
+                    <Table.Body>
+                        <Table.Row>
+                            <Table.Cell>
+                                <Dropdown selection options={this.state.options} onChange={this.handleSelection}>
+                                    
+                                </Dropdown>
+                            </Table.Cell>
+                            <Table.Cell>
+                                <Button onClick={this.addShareholder}>Add Shareholder</Button>
+                            </Table.Cell>
+                        </Table.Row>
+                    </Table.Body>
+                </Table>
+                
             </div>
         );
     }
