@@ -7,7 +7,10 @@ import { Icon, Label, Menu, Table, Button, Input, Dropdown } from 'semantic-ui-r
 import './Ethemy.css';
 
 var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
-var address = "0x1b5ae8f48bdc13bf7ed78b062fd86626d56282d3";
+var address = "0x7d0a9304230badf2acfee6934d13e002b0686ada";
+
+
+
 var devAbi = [
     {
       "inputs": [
@@ -189,7 +192,9 @@ class Ethemy extends Component {
         // //var result = Contract.addShareholder(web3.eth.coinbase);
         var balance = web3.fromWei(web3.eth.getBalance(address), "ether");
         var shareholders = Contract.getAddresses.call();
-        
+        shareholders = shareholders.filter(function(elem, pos, arr) {
+            return arr.indexOf(elem) == pos;
+        });
         var shareholderBalances = [];
         var accountBalances = [];
         
@@ -209,11 +214,18 @@ class Ethemy extends Component {
             options.push({key:accounts[i], text:accounts[i], balance:web3.fromWei(tBal, "ether"), value:i});
             console.log(options[i]);
         }
+
+        var event = Contract.FailedSend({address: address}, {fromBlock:'latest', toBlock:'latest'});
+        event.watch(function(error, response) {
+            alert(response.event);
+        });
         
         super(props);
         this.handleChange = this.handleChange.bind(this);
         this.handleSelection = this.handleSelection.bind(this);
         this.addShareholder = this.addShareholder.bind(this);
+        this.sendFunds = this.sendFunds.bind(this);
+        this.withdrawFunds = this.withdrawFunds.bind(this);
         this.state = {
             web3: web3,
             address: address,
@@ -249,7 +261,9 @@ class Ethemy extends Component {
         var balance = web3.fromWei(this.state.web3.eth.getBalance(this.state.address), "ether");
         var length = Contract.getLength.call();
         var shareholders = Contract.getAddresses.call();
-        
+        shareholders = shareholders.filter(function(elem, pos, arr) {
+            return arr.indexOf(elem) == pos;
+        });
         var shareholderBalances = [];
         var accountBalances = [];
 
@@ -301,13 +315,40 @@ class Ethemy extends Component {
 
     addShareholder(event) {
         console.log(this.state.contract);
-        console.log(this.state.accounts[6]);
+        console.log(this.state.accounts[this.state.selectedAccount]);
         this.state.web3.eth.defaultAccount = this.state.web3.eth.coinbase;
-        this.state.contract.addAddress(this.state.accounts[6]);
+        this.state.contract.addAddress(this.state.accounts[this.state.selectedAccount]);
         this.getContract();
         
     }
 
+    sendFunds(event) {
+        console.log("Sending funds");
+        var address = this.state.accounts[this.state.selectedAccount]; 
+        console.log(address);
+        this.state.web3.eth.defaultAccount = address;
+        this.state.web3.eth.sendTransaction({from: address, to: this.state.address, value:this.state.web3.toWei(2.5, "ether")});
+        this.getContract();
+    }
+
+    
+    withdrawFunds(event) {
+        console.log("Withdrawing funds");
+        var address = this.state.accounts[this.state.selectedAccount]; 
+        this.state.web3.eth.defaultAccount = address;
+        
+        var currentBlockNum = web3.eth.blockNumber
+       
+        var test = this.state.contract.withdraw();
+        
+        this.getContract();
+        
+        
+
+
+        
+        
+    }
     render() {
 
         // const block = this.state.block;
@@ -401,6 +442,8 @@ class Ethemy extends Component {
                             </Table.Cell>
                             <Table.Cell>
                                 <Button onClick={this.addShareholder}>Add Shareholder</Button>
+                                <Button onClick={this.sendFunds}>Send Funds</Button>
+                                <Button onClick={this.withdrawFunds}>Withdraw Funds</Button>
                             </Table.Cell>
                         </Table.Row>
                     </Table.Body>
